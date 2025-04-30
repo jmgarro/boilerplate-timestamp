@@ -2,8 +2,11 @@
 // where your node app starts
 
 // init project
+let bodyParser = require('body-parser');
 var express = require('express');
 var app = express();
+app.use(bodyParser.urlencoded({extended: false}));
+app.use("/public", express.static(__dirname + '/public'));
 
 // enable CORS (https://en.wikipedia.org/wiki/Cross-origin_resource_sharing)
 // so that your API is remotely testable by FCC 
@@ -16,6 +19,37 @@ app.use(express.static('public'));
 // http://expressjs.com/en/starter/basic-routing.html
 app.get("/", function (req, res) {
   res.sendFile(__dirname + '/views/index.html');
+});
+let error= '';
+app.get("/api/:date?", function(req, res, next){
+  let { date } = req.params;
+
+  if (!date) {
+    parsedDate = new Date();
+  } else {
+    // Check if date is a Unix timestamp (all digits)
+    if (/^\d+$/.test(date)) {
+      // Parse it as a Number, assuming milliseconds
+      parsedDate = new Date(Number(date));
+    } else {
+      // Try to parse as ISO or other date string
+      parsedDate = new Date(date);
+    }
+  }
+
+   // Validate date
+   if (parsedDate.toString() === "Invalid Date") {
+      error="Invalid Date";
+    }
+    else{error=''}
+
+  req.date=new Date(parsedDate);
+  next();
+}, function(req, res){
+  res.json({"unix": req.date.getTime(),
+    "utc": req.date.toUTCString(),
+    "error": error
+  });
 });
 
 
